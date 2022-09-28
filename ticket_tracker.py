@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from datetime import datetime
 from ticket_class import Ticket
 conn = sqlite3.connect(':memory:') #'ticket.db'
@@ -75,8 +76,28 @@ if inp == 'yes' or inp=='y':
     sm=Ticket(f_name, l_name, rank, date, unit, act_type)
     insert_ticket(sm)
 
-else:
-    print("Adios")
+elif inp == 'no' or inp=='n':
+    inp = input('Are you here to delete a ticket?: Y/N: ')
+    inp = inp.lower()
+
+    if inp == 'yes' or inp == 'y':
+        print("!WARNING! THIS WILL DELETE TICKET BASED ON INFO GIVEN")
+        time.sleep(3)
+        f_name = input('Please enter First Name: ')
+        l_name = input('Please enter Last Name: ')
+
+        rank = input('Please enter rank, 3 letter format only: ')
+        while len(rank) != 3:  # verify length. 3 letter format only
+            rank = input('Incorrect format. Please enter rank, 3 letter format only: ')
+
+        date = input('Please enter date (YYYY-MM-DD): ')
+        if not date_validator(date):
+            date = input('Incorrect format. Please enter date (YYYY-MM-DD): ')
+            date_validator(date)
+
+        unit = input('Please enter unit: ')
+
+        act_type = action_validator()
 
 
 # conn.commit()
