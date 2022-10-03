@@ -83,9 +83,6 @@ def get_insert_inputs():
     sm=Ticket(f_name, l_name, rank, date, unit, act_type)
     insert_ticket(sm)
 
-
-
-
 def get_delete_inputs():
     #Gets inputs for the user and then sends those inputs to the delete function
     print("!WARNING! THIS WILL DELETE TICKET BASED ON INFO GIVEN")
@@ -108,19 +105,53 @@ def get_delete_inputs():
 
     delete_ticket(f_name, l_name, rank, date, unit, act_type)
 
+def get_totals(outer_loop):
+    while not outer_loop:
+        inp=input('Totals by unit, action type or all?: ')
+        inp=inp.lower()
+        with conn:
+            if inp=='all':
+                c.execute("SELECT COUNT(*) FROM tickets")
+                print(str(c.fetchall()[0][0]) + ' total actions completed') # to get to the element in the list tuple
+                outer_loop=True
+
+            elif inp== 'unit':
+                unit=input('Please under unit ID: ')
+                c.execute("SELECT COUNT(*) FROM tickets WHERE unit = :unit ", {'unit': unit})
+                print(str(c.fetchall()[0][0]) + ' from the ' + str(unit))
+                outer_loop = True
+
+            elif inp== 'action type':
+                loop_token=False
+                while not loop_token:
+                    act_type=input('Please enter pay, admin, iPERMS or Epat: ')
+                    act_type=act_type.lower()
+                    if act_type == 'pay' or act_type == 'admin' or act_type == 'iperms' or act_type == 'epat':
+                        c.execute("SELECT COUNT(*) FROM tickets WHERE act_type = :act_type ", {'act_type': act_type})
+                        print(str(c.fetchall()[0][0]) + ' ' + act_type + ' actions')
+                        loop_token=True
+                        outer_loop = True
+                    else:
+                        print('Action type not recognized, please try again.')
+
+            else:
+                print('Action type not recognized, please try again.')
 
 
 
-# conn.commit()
 
-token=-1
+############# Action Loop #############
+token=-1 # used to track if first action or not
+#need to add verification
 while token<0:
-    inp=input("Tell me why you are here. Enter ADD or DELETE: ")
+    inp=input("Tell me why you are here. Enter ADD, DELETE, TOTALS: ")
     inp=inp.lower()
     if inp=="add":
         get_insert_inputs()
     elif inp=="delete":
         get_delete_inputs()
+    elif inp=="totals":
+        get_totals(False)
     inp = input("Would you like to complete another action? Y/N: ")
     inp=inp.lower()
     if inp=="n" or inp=="no":
@@ -128,7 +159,7 @@ while token<0:
 print('Goodbye')
 
 
-c.execute("SELECT * from tickets WHERE first='Tyler'")
+c.execute("SELECT * from tickets")
 #
 print(c.fetchall())
 
