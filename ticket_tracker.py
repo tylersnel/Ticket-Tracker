@@ -74,7 +74,7 @@ def get_totals(outer_loop):
     # loop starts again. If recognized, loop ends and prints totals.
     # returns nothing.
     while not outer_loop:
-        inp=input('Totals by unit, action type or all? Type return to go back: ')
+        inp=input('Totals by action type or all? Type return to go back: ')
         inp=inp.lower()
         with conn:
             if inp=='return':
@@ -141,31 +141,36 @@ def get_delete_inputs():
 
     delete_ticket(l_name, date, act_type)
 
-
-
-
-
-
 ############# Action Loop #############
-token=-1 # used to track if first action or not
-#need to add verification
-while token<0:
-    inp=input("Tell me why you are here. Enter ADD, DELETE, UPDATE TL or TOTALS: ")
-    inp=inp.lower()
-    if inp=="add":
-        get_insert_inputs()
-    elif inp=="delete":
-        get_delete_inputs()
-    elif inp=="totals":
-        get_totals(False)
-    elif inp=="update tl":
-        get_update_inputs()
 
+    #need to add verification
+outer_loop=False
+while not outer_loop:
+    inner_loop=False
+    while not inner_loop:
+        inp = input("Tell me why you are here. Enter ADD, DELETE, UPDATE TL or TOTALS: ")
+        inp = inp.lower()
+        if inp=="add":
+            get_insert_inputs()
+            inner_loop=True
+        elif inp=="delete":
+            get_delete_inputs()
+            inner_loop=True
+        elif inp=="totals":
+            get_totals(False)
+            inner_loop=True
+        elif inp=="update tl":
+            get_update_inputs()
+            inner_loop=True
+        else:
+            print("Input not recognized. Try again.")
     inp = input("Would you like to complete another action? Y/N: ")
     inp=inp.lower()
     if inp=="n" or inp=="no":
-        token+=1
-print('Goodbye')
+        outer_loop=True
+        print("Goodbye")
+
+
 #
 # c.execute("DROP TABLE tickets")
 
