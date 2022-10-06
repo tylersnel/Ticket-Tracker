@@ -8,15 +8,12 @@ c = conn.cursor()
 
 ############# Table Creator #############
 #if table doesn't exist already in DB, un-comment
-c.execute("""CREATE TABLE tickets (
-     first text,
-     last text,
-     rank text,
-     date text,
-     unit integer,
-     act_type text,
-     tl_num text
-     )""")
+# c.execute("""CREATE TABLE tickets (
+#      last text,
+#      date text,
+#      act_type text,
+#      tl_num text
+#      )""")
 
 ############# Input Validators #############
 def date_validator(date_text):
@@ -49,23 +46,27 @@ def action_validator():
 def insert_ticket(new_ticket):
     #Inserts ticket into ticket table based off inputs from calling fuction
     with conn: #no longer need of commit statment
-        c.execute("INSERT INTO tickets VALUES (:first, :last, :rank, :date, :unit, :act_type, :tl_num)" ,
-              {'first':new_ticket.first, 'last':new_ticket.last, 'rank':new_ticket.rank, 'date':new_ticket.date,
-               'unit':new_ticket.unit, 'act_type':new_ticket.act_type, 'tl_num' :new_ticket.tl_num })
+        c.execute("INSERT INTO tickets VALUES ( :last, :date, :act_type, :tl_num)" ,
+              { 'last':new_ticket.last,  'date':new_ticket.date,
+                'act_type':new_ticket.act_type, 'tl_num' :new_ticket.tl_num })
 
-def delete_ticket(first,last, rank,date, unit, act_type):
+def delete_ticket(last, date, act_type):
     #Deletes ticket using SQL based on inputs from calling function
     with conn:
-        c.execute("DELETE FROM tickets WHERE first=:first AND last =:last AND rank = :rank AND date =:date AND unit = :unit AND act_type= :act_type" ,
-                  {'first': first, 'last': last, 'rank': rank, 'date': date,
-                   'unit': unit, 'act_type': act_type} )
+        c.execute("DELETE FROM tickets WHERE last =:last AND date =:date AND act_type= :act_type" ,
+                  {'last': last, 'date': date, 'act_type': act_type} )
 
-def update_ticket(first, last, date, act_type):
+def get_update_inputs():
+    last=input('Please enter last name: ')
+    date=input('Please enter date: ')
+    tl_num=input('Please enter TL number: ')
+    update_ticket_tl(last, date, tl_num)
+
+def update_ticket_tl(last, date, tl_num):
     with conn:
         c.execute(
-            "UPDATE tickets WHERE first=:first AND last =:last AND date =:date AND act_type= :act_type",
-            {'first': first, 'last': last, 'date': date, 'act_type': act_type})
-
+            "UPDATE tickets SET tl_num= :tl_num WHERE last =:last AND date =:date",
+            {'tl_num': tl_num, 'last': last, 'date': date})
 
 def get_totals(outer_loop):
     # function that prints out total actions completed by type.
@@ -82,12 +83,6 @@ def get_totals(outer_loop):
                 c.execute("SELECT COUNT(*) FROM tickets")
                 print(str(c.fetchall()[0][0]) + ' total actions completed') # to get to the element in the list tuple
                 outer_loop=True
-
-            elif inp== 'unit':
-                unit=input('Please under unit ID: ')
-                c.execute("SELECT COUNT(*) FROM tickets WHERE unit = :unit ", {'unit': unit})
-                print(str(c.fetchall()[0][0]) + ' from the ' + str(unit))
-                outer_loop = True
 
             elif inp== 'action type':
                 loop_token=False
@@ -107,22 +102,12 @@ def get_totals(outer_loop):
 
 def get_insert_inputs():
     #Gets input from the user, then sends inputs to the insert function
-    f_name=input('Please enter First Name: ')
-
     l_name = input('Please enter Last Name: ')
-
-    rank = input('Please enter rank, 3 letter format only: ')
-    while len(rank)!=3:# verify length. 3 letter format only
-        rank = input('Incorrect format. Please enter rank, 3 letter format only: ')
-    rank=rank.lower()
 
     date = input('Please enter date (YYYY-MM-DD): ')
     if not date_validator(date):
         date = input('Incorrect format. Please enter date (YYYY-MM-DD): ')
         date_validator(date)
-
-
-    unit = input('Please enter unit: ')
 
     act_type=action_validator()
 
@@ -131,14 +116,13 @@ def get_insert_inputs():
         while not loop_val:
             tl_num=input('Enter TL number if you have it, press enter if you do not: ')
             if tl_num.isdigit() or not tl_num:
-                Ticket(f_name, l_name, rank, date, unit, act_type, tl_num)
-                sm = Ticket(f_name, l_name, rank, date, unit, act_type, tl_num)
+                sm = Ticket(l_name, date, act_type, tl_num)
                 loop_val = True
             else: print('Invalid input. Try again')
 
 
     else:
-        sm=Ticket(f_name, l_name, rank, date, unit, act_type, None)
+        sm=Ticket(l_name, date, act_type, None) #non-pay action won't have TL number, so set to none
     print(sm.tl_num)
     insert_ticket(sm)
 
@@ -146,23 +130,16 @@ def get_delete_inputs():
     #Gets inputs for the user and then sends those inputs to the delete function
     print("!WARNING! THIS WILL DELETE TICKET BASED ON INFO GIVEN")
     time.sleep(3)
-    f_name = input('Please enter First Name: ')
     l_name = input('Please enter Last Name: ')
-
-    rank = input('Please enter rank, 3 letter format only: ')
-    while len(rank) != 3:  # verify length. 3 letter format only
-        rank = input('Incorrect format. Please enter rank, 3 letter format only: ')
 
     date = input('Please enter date (YYYY-MM-DD): ')
     if not date_validator(date):
         date = input('Incorrect format. Please enter date (YYYY-MM-DD): ')
         date_validator(date)
 
-    unit = input('Please enter unit: ')
-
     act_type = action_validator()
 
-    delete_ticket(f_name, l_name, rank, date, unit, act_type)
+    delete_ticket(l_name, date, act_type)
 
 
 
@@ -173,7 +150,7 @@ def get_delete_inputs():
 token=-1 # used to track if first action or not
 #need to add verification
 while token<0:
-    inp=input("Tell me why you are here. Enter ADD, DELETE, TOTALS: ")
+    inp=input("Tell me why you are here. Enter ADD, DELETE, UPDATE TL or TOTALS: ")
     inp=inp.lower()
     if inp=="add":
         get_insert_inputs()
@@ -181,12 +158,16 @@ while token<0:
         get_delete_inputs()
     elif inp=="totals":
         get_totals(False)
+    elif inp=="update tl":
+        get_update_inputs()
+
     inp = input("Would you like to complete another action? Y/N: ")
     inp=inp.lower()
     if inp=="n" or inp=="no":
         token+=1
 print('Goodbye')
-
+#
+# c.execute("DROP TABLE tickets")
 
 c.execute("SELECT * from tickets")
 #
